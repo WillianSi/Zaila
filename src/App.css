@@ -1,0 +1,191 @@
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-image: url(/src/assets/IntitutoFederal.png);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.app-container {
+  width: 1000px;
+  max-width: 100%;
+  text-align: center;
+}
+
+.spotlight__wrapper {
+  border-left: 1px solid #2c2d2f; /* Adiciona uma borda de 1px na esquerda */
+  border-right: 1px solid #2c2d2f; /* Adiciona uma borda de 1px na direita */
+  border-bottom: 1px solid #2c2d2f; /* Adiciona uma borda de 1px na inferior */
+  border-radius: 0 0 12px 12px;
+  margin: auto;
+  max-width: 400px;
+  background-color: #fff;
+}
+
+.spotlight__input {
+  height: 45px;
+  width: 80%;
+  border: 1px solid #2c2d2f;
+  border-radius: 12px;
+  outline: none;
+  font-size: 1.2rem;
+  color: #000;
+  background-position: left 17px center;
+  background-repeat: no-repeat;
+  background-color: #fff;
+  background-size: 3.5%;
+  padding-left: 60px;
+  margin-bottom: 10px;
+}
+
+.spotlight__input::placeholder {
+  line-height: 1.5em;
+}
+
+.spotlight__option {
+  display: flex;
+  justify-content: flex-end; /* Alinha o conteúdo à direita */
+  border: 1px solid #2c2d2f;
+  border-radius: 12px 12px 0 0;
+  height: 32px;
+  margin: auto;
+  max-width: 400px;
+  background-color: #2E8B57;
+}
+
+.spotlight__answer {
+  min-height: 400px;
+  max-height: 400px;
+  overflow: auto;
+  line-height: 1.4em;
+  letter-spacing: 0.1px;
+}
+
+.spotlight__answer::-webkit-scrollbar {
+  width: 0;
+}
+
+.spotlight__answer {
+  scrollbar-width: none;
+}
+
+.spotlight__answer p::after {
+  content: "";
+  width: 2px;
+  height: 14px;
+  position: relative;
+  top: 2px;
+  left: 2px;
+  background: black;
+  display: inline-block;
+  animation: cursor-blink 1s steps(2) infinite;
+}
+
+@keyframes cursor-blink {
+  0% {
+    opacity: 0;
+  }
+}
+
+/* ButtonWithImage.css */
+
+.custom-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0px 12px 0 0;
+  transition: background-color 0.3s ease;
+  background-color: #2E8B57;
+}
+
+.custom--button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  background-color: #2E8B57;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.custom-button:hover {
+  background-color: #d76161;
+}
+
+.custom--button:hover {
+  background-color: #3a414591;
+}
+
+.nome-chat {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 105px 5px 5px;
+  margin-top: auto;
+  margin-bottom: auto;
+  color: white;
+  font-size: 16px;
+  animation: piscar 2s infinite;
+}
+
+@keyframes piscar {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.online {
+  display: block;
+  background: #00c853;
+  height: 10px;
+  width: 10px;
+  border-radius: 10px;
+  margin-left: 5px;
+  animation-name: blinking;
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+}
+
+.chatbox_message {
+  position: relative;
+  padding: 5px 20px;
+  border-radius: 15px;
+  text-align: justify;
+}
+
+.question {
+  align-self: flex-start;
+  background: #f1f1f1;
+  margin: 5px 10px 5px 40%;
+  text-align: end;
+}
+
+.answer {
+  align-self: flex-end;
+  background: #e1f5fe;
+  margin: 5px 20% 5px 10px;
+}
