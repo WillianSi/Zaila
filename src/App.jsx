@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import "./App.css";
 import lens from "./assets/lens.png";
 import loadingGif from "./assets/loading.gif";
 import closeImage from "./assets/botao-fechar.png";
 import clearImage from "./assets/lixeira.png";
-import axios from "axios";
-import "./App.css";
 
 function makeLinksClickable(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.replace(urlRegex, (url) => {
     return (
-      '<a href="' + url + '" target="_blank" rel="noopener noreferrer">clique aqui</a>'
+      '<a href="' +
+      url +
+      '" target="_blank" rel="noopener noreferrer">clique aqui</a>'
     );
   });
 }
@@ -19,11 +21,17 @@ function App() {
   const [question, updatePrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     const welcomeMessage = "Olá! Eu sou a Zaila. Como posso ajudar você hoje?";
     setMessages([{ type: "answer", content: welcomeMessage }]);
+    inputRef.current.focus();
   }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const sendPrompt = async (event) => {
     if (event.key !== "Enter" || question.trim() === "") {
@@ -72,16 +80,13 @@ function App() {
       }
 
       updatePrompt("");
-      scrollToBottom();
-
     } catch (error) {
       console.error("Error:", error);
-      setAnswer("Um erro ocorreu.");
+      // Handle the error appropriately
     } finally {
       setLoading(false);
     }
   };
-
   const fecharGuia = () => {
     window.close();
   };
@@ -123,6 +128,7 @@ function App() {
           </div>
 
           <input
+            ref={inputRef}
             type="text"
             className="spotlight__input"
             placeholder="Digite uma pergunta..."
