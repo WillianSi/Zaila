@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import lens from "./assets/lens.png";
 import loadingGif from "./assets/loading.gif";
 import closeImage from "./assets/botao-fechar.png";
@@ -6,10 +6,24 @@ import clearImage from "./assets/lixeira.png";
 import axios from "axios";
 import "./App.css";
 
+function makeLinksClickable(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, (url) => {
+    return (
+      '<a href="' + url + '" target="_blank" rel="noopener noreferrer">clique aqui</a>'
+    );
+  });
+}
+
 function App() {
   const [question, updatePrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const welcomeMessage = "Olá! Eu sou a Zaila. Como posso ajudar você hoje?";
+    setMessages([{ type: "answer", content: welcomeMessage }]);
+  }, []);
 
   const sendPrompt = async (event) => {
     if (event.key !== "Enter" || question.trim() === "") {
@@ -18,8 +32,8 @@ function App() {
 
     try {
       const predictionUrl =
-        "https://canal-idioma.cognitiveservices.azure.com/language/:query-knowledgebases?projectName=Zaila&api-version=2021-10-01&deploymentName=production";
-      const subscriptionKey = "2e45b815bcfe4971b9f85fa2e86ca03c";
+        "https://zaila-language.cognitiveservices.azure.com/language/:query-knowledgebases?projectName=Zaila&api-version=2021-10-01&deploymentName=production";
+      const subscriptionKey = "1bb05b6289a0497ea06bd1219f1eef3e";
 
       setLoading(true);
 
@@ -41,24 +55,24 @@ function App() {
         response.data.answers &&
         response.data.answers.length > 0
       ) {
-        setMessages([
-          ...messages,
+        setMessages((prevMessages) => [
+          ...prevMessages,
           { type: "question", content: question },
-          { type: "answer", content: response.data.answers[0].answer },
+          {
+            type: "answer",
+            content: makeLinksClickable(response.data.answers[0].answer),
+          },
         ]);
       } else {
-        setMessages([
-          ...messages,
+        setMessages((prevMessages) => [
+          ...prevMessages,
           { type: "question", content: question },
           { type: "answer", content: "Nenhuma resposta encontrada." },
         ]);
       }
-    // Clear the input field
-    updatePrompt("");
 
-    // Scroll to bottom
-    scrollToBottom();
-
+      updatePrompt("");
+      scrollToBottom();
 
     } catch (error) {
       console.error("Error:", error);
@@ -103,9 +117,8 @@ function App() {
                 className={`chatbox_message ${
                   message.type === "question" ? "question" : "answer"
                 }`}
-              >
-                {message.content}
-              </div>
+                dangerouslySetInnerHTML={{ __html: message.content }}
+              ></div>
             ))}
           </div>
 
