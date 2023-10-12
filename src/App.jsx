@@ -7,6 +7,7 @@ import closeImage from "./assets/botao-fechar.png";
 import clearImage from "./assets/lixeira.png";
 import microfone from "./assets/microfone-gravador.png";
 import microfoneMudo from "./assets/microfone-mudo.png";
+import falar from "./assets/falando.png";
 
 function makeLinksClickable(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -19,7 +20,7 @@ function makeLinksClickable(text) {
   });
 }
 
-function App() {
+const App = () => {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -145,6 +146,32 @@ function App() {
     }
   };
 
+  const speak = (text) => {
+    if ("speechSynthesis" in window) {
+      const speechSynthesis = window.speechSynthesis;
+      const voices = speechSynthesis.getVoices();
+      
+      // Encontre a voz feminina em português, preferencialmente a voz do Google
+      const portugueseVoice = voices.find((voice) => voice.lang === 'pt-BR' && voice.name.includes('Google'));
+  
+      // Se não encontrar a voz do Google, use qualquer voz feminina em português
+      const defaultPortugueseVoice = voices.find((voice) => voice.lang === 'pt-BR' && voice.name.includes('female'));
+  
+      const selectedVoice = portugueseVoice || defaultPortugueseVoice;
+  
+      if (selectedVoice) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.voice = selectedVoice;
+        speechSynthesis.speak(utterance);
+      } else {
+        alert("No suitable Portuguese voice found.");
+      }
+    } else {
+      alert("Text-to-speech is not supported in your browser.");
+    }
+  };
+  
+
   return (
     <div className="app">
       <div className="app-container">
@@ -169,39 +196,54 @@ function App() {
           </button>
         </div>
         <div className="spotlight__wrapper">
-          <div className="spotlight__answer" id="chatbox">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`chatbox_message ${
-                  message.type === "question" ? "question" : "answer"
-                }`}
-                dangerouslySetInnerHTML={{ __html: message.content }}
-              ></div>
-            ))}
-          </div>
+  <div className="spotlight__answer" id="chatbox">
+    {messages.map((message, index) => (
+      <div
+        key={index}
+        className={`chatbox_message ${
+          message.type === "question" ? "question" : "answer"
+        }`}
+      >
+        <span dangerouslySetInnerHTML={{ __html: message.content }}></span>
+        <button
+          className="read-aloud-button"
+          onClick={() => speak(message.content)}
+          style={{
+            backgroundColor: "transparent",
+            padding: "0",
+            border: "none",
+            marginLeft: "15px",
+            display: "inline-block",
+            verticalAlign: "middle", // Center the button vertically
+          }}
+        >
+          <img src={falar} alt="Icon" className="icon" />
+        </button>
+      </div>
+    ))}
+  </div>
 
-          <input
-            ref={inputRef}
-            type="text"
-            className="spotlight__input"
-            placeholder="Digite uma pergunta..."
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                sendPrompt(question);
-              }
-            }}
-            disabled={loading || listening}
-            style={{
-              backgroundImage: loading ? `url(${loadingGif})` : `url(${lens})`,
-            }}
-          />
-        </div>
+  <input
+    ref={inputRef}
+    type="text"
+    className="spotlight__input"
+    placeholder="Digite uma pergunta..."
+    value={question}
+    onChange={(e) => setQuestion(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        sendPrompt(question);
+      }
+    }}
+    disabled={loading || listening}
+    style={{
+      backgroundImage: loading ? `url(${loadingGif})` : `url(${lens})`,
+    }}
+  />
+</div>
       </div>
     </div>
   );
-}
+};
 
 export default App;
