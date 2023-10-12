@@ -161,10 +161,10 @@ const App = () => {
         utterance.voice = selectedVoice;
         speechSynthesis.speak(utterance);
       } else {
-        alert("No suitable Portuguese voice found.");
+        alert("Não foi encontrada nenhuma voz adequada em português, tente novamente");
       }
     } else {
-      alert("Text-to-speech is not supported in your browser.");
+      alert("A conversão de texto em fala não é compatível com seu navegador.");
     }
   };
   
