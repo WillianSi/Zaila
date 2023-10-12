@@ -154,7 +154,10 @@ const App = () => {
       // Encontre a voz feminina em português, preferencialmente a voz do Google
       const portugueseVoice = voices.find((voice) => voice.lang === 'pt-BR' && voice.name.includes('Google'));
   
-      const selectedVoice = portugueseVoice;
+      // Se não encontrar a voz do Google, use qualquer voz feminina em português
+      const defaultPortugueseVoice = voices.find((voice) => voice.lang === 'pt-BR' && voice.name.includes('female'));
+  
+      const selectedVoice = portugueseVoice || defaultPortugueseVoice;
   
       if (selectedVoice) {
         const utterance = new SpeechSynthesisUtterance(text);
