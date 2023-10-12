@@ -5,6 +5,8 @@ import lens from "./assets/lens.png";
 import loadingGif from "./assets/loading.gif";
 import closeImage from "./assets/botao-fechar.png";
 import clearImage from "./assets/lixeira.png";
+import microfone from "./assets/microfone-gravador.png";
+import microfoneMudo from "./assets/microfone-mudo.png";
 
 function makeLinksClickable(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -18,9 +20,11 @@ function makeLinksClickable(text) {
 }
 
 function App() {
-  const [question, updatePrompt] = useState("");
+  const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [listening, setListening] = useState(false);
+  const [recognizedSpeech, setRecognizedSpeech] = useState("");
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -33,8 +37,8 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  const sendPrompt = async (event) => {
-    if (event.key !== "Enter" || question.trim() === "") {
+  const sendPrompt = async (inputText) => {
+    if (inputText.trim() === "") {
       return;
     }
 
@@ -51,13 +55,14 @@ function App() {
       };
 
       const requestBody = {
-        question: question,
+        question: inputText,
         top: 1,
       };
 
       const response = await axios.post(predictionUrl, requestBody, {
         headers,
       });
+
       if (
         response.data &&
         response.data.answers &&
@@ -65,7 +70,7 @@ function App() {
       ) {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { type: "question", content: question },
+          { type: "question", content: inputText },
           {
             type: "answer",
             content: makeLinksClickable(response.data.answers[0].answer),
@@ -74,30 +79,70 @@ function App() {
       } else {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { type: "question", content: question },
+          { type: "question", content: inputText },
           { type: "answer", content: "Nenhuma resposta encontrada." },
         ]);
       }
 
-      updatePrompt("");
+      setQuestion("");
     } catch (error) {
       console.error("Error:", error);
-      // Handle the error appropriately
     } finally {
       setLoading(false);
     }
   };
+
   const fecharGuia = () => {
     window.close();
   };
 
   const clearMessages = () => {
     setMessages([]);
+    setRecognizedSpeech("");
   };
 
   const scrollToBottom = () => {
     const chatbox = document.getElementById("chatbox");
     chatbox.scrollTop = chatbox.scrollHeight;
+  };
+
+  const startListening = () => {
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+
+      recognition.onstart = () => {
+        setListening(true);
+      };
+
+      recognition.onend = () => {
+        setListening(false);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setRecognizedSpeech(transcript);
+        sendPrompt(transcript);
+      };
+
+      recognition.start();
+    } else {
+      alert("O reconhecimento de fala não é compatível com seu navegador.");
+    }
+  };
+
+  const stopListening = () => {
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+
+      recognition.stop();
+      setListening(false);
+    } else {
+      alert("O reconhecimento de fala não é compatível com seu navegador.");
+    }
   };
 
   return (
@@ -107,6 +152,15 @@ function App() {
           <h2 className="nome-chat">
             Zaila <div className="online"></div>
           </h2>
+          {listening ? (
+            <button className="custom--button" onClick={stopListening}>
+              <img src={microfoneMudo} alt="Icon" className="icon" />
+            </button>
+          ) : (
+            <button className="custom--button" onClick={startListening}>
+              <img src={microfone} alt="Icon" className="icon" />
+            </button>
+          )}
           <button className="custom--button" onClick={clearMessages}>
             <img src={clearImage} alt="Icon" className="icon" />
           </button>
@@ -133,9 +187,13 @@ function App() {
             className="spotlight__input"
             placeholder="Digite uma pergunta..."
             value={question}
-            onChange={(e) => updatePrompt(e.target.value)}
-            onKeyDown={(e) => sendPrompt(e)}
-            disabled={loading}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                sendPrompt(question);
+              }
+            }}
+            disabled={loading || listening}
             style={{
               backgroundImage: loading ? `url(${loadingGif})` : `url(${lens})`,
             }}
