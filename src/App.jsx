@@ -28,6 +28,8 @@ const App = () => {
   const [recognizedSpeech, setRecognizedSpeech] = useState("");
   const inputRef = useRef(null);
 
+  const errorMessage = "Um erro inesperado aconteceu!";
+
   useEffect(() => {
     const welcomeMessage = "Olá! Eu sou a Zaila. Como posso ajudar você hoje?";
     setMessages([{ type: "answer", content: welcomeMessage }]);
@@ -45,8 +47,8 @@ const App = () => {
 
     try {
       const predictionUrl =
-        "https://zaila-language.cognitiveservices.azure.com/language/:query-knowledgebases?projectName=Zaila&api-version=2021-10-01&deploymentName=production";
-      const subscriptionKey = "1bb05b6289a0497ea06bd1219f1eef3e";
+        "https://servico-linguagem.cognitiveservices.azure.com/language/:query-knowledgebases?projectName=Zaila&api-version=2021-10-01&deploymentName=production";
+      const subscriptionKey = "886edc33955c475f8a7a783c7f304bb7";
 
       setLoading(true);
 
@@ -87,7 +89,7 @@ const App = () => {
 
       setQuestion("");
     } catch (error) {
-      console.error("Error:", error);
+      setMessages([{ type: "answer", content: errorMessage }]);
     } finally {
       setLoading(false);
     }
