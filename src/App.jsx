@@ -1,249 +1,131 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { Mic, Send, Trash2, Volume2 } from "lucide-react";
 import "./App.css";
-import lens from "./assets/lens.png";
-import loadingGif from "./assets/loading.gif";
-import closeImage from "./assets/botao-fechar.png";
-import clearImage from "./assets/lixeira.png";
-import microfone from "./assets/microfone-gravador.png";
-import microfoneMudo from "./assets/microfone-mudo.png";
-import falar from "./assets/falando.png";
-
-function makeLinksClickable(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return text.replace(urlRegex, (url) => {
-    return (
-      '<a href="' +
-      url +
-      '" target="_blank" rel="noopener noreferrer">clique aqui</a>'
-    );
-  });
-}
 
 const App = () => {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [listening, setListening] = useState(false);
-  const [recognizedSpeech, setRecognizedSpeech] = useState("");
-  const inputRef = useRef(null);
+  const chatboxRef = useRef(null);
 
-  const errorMessage = "Um erro inesperado aconteceu!";
+  const backendUrl = "https://zaila-backend.onrender.com/chat";
 
   useEffect(() => {
-    const welcomeMessage = "Olá! Eu sou a Zaila. Como posso ajudar você hoje?";
-    setMessages([{ type: "answer", content: welcomeMessage }]);
-    inputRef.current.focus();
+    setMessages([{ type: "bot", content: "Olá! Sou a Zaila. Como posso ajudar você hoje?" }]);
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
+    chatboxRef.current?.scrollTo(0, chatboxRef.current.scrollHeight);
   }, [messages]);
 
   const sendPrompt = async (inputText) => {
-    if (inputText.trim() === "") {
-      return;
-    }
+    if (!inputText.trim()) return;
+
+    setLoading(true);
+    setMessages((prev) => [...prev, { type: "user", content: inputText }]);
+    setQuestion("");
 
     try {
-      const predictionUrl =
-        "https://servico-linguagem.cognitiveservices.azure.com/language/:query-knowledgebases?projectName=Zaila&api-version=2021-10-01&deploymentName=production";
-      const subscriptionKey = "886edc33955c475f8a7a783c7f304bb7";
+      const response = await axios.post(backendUrl, { message: inputText });
 
-      setLoading(true);
-
-      const headers = {
-        "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": subscriptionKey,
-      };
-
-      const requestBody = {
-        question: inputText,
-        top: 1,
-      };
-
-      const response = await axios.post(predictionUrl, requestBody, {
-        headers,
-      });
-
-      if (
-        response.data &&
-        response.data.answers &&
-        response.data.answers.length > 0
-      ) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { type: "question", content: inputText },
-          {
-            type: "answer",
-            content: makeLinksClickable(response.data.answers[0].answer),
-          },
-        ]);
+      if (response.data && response.data.response) {
+        setMessages((prev) => [...prev, { type: "bot", content: response.data.response }]);
       } else {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { type: "question", content: inputText },
-          { type: "answer", content: "Nenhuma resposta encontrada." },
-        ]);
+        setMessages((prev) => [...prev, { type: "bot", content: "Nenhuma resposta encontrada." }]);
       }
-
-      setQuestion("");
     } catch (error) {
-      setMessages([{ type: "answer", content: errorMessage }]);
+      setMessages((prev) => [...prev, { type: "bot", content: "❗ Erro ao buscar resposta." }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fecharGuia = () => {
-    window.close();
+  const speak = (text) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "pt-BR";
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
   const clearMessages = () => {
     setMessages([]);
-    setRecognizedSpeech("");
-  };
-
-  const scrollToBottom = () => {
-    const chatbox = document.getElementById("chatbox");
-    chatbox.scrollTop = chatbox.scrollHeight;
   };
 
   const startListening = () => {
-    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-
-      recognition.onstart = () => {
-        setListening(true);
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setRecognizedSpeech(transcript);
-        sendPrompt(transcript);
-      };
-
-      recognition.start();
-    } else {
-      alert("O reconhecimento de fala não é compatível com seu navegador.");
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+      alert("Reconhecimento de voz não suportado.");
+      return;
     }
-  };
 
-  const stopListening = () => {
-    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
 
-      recognition.stop();
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onerror = (e) => {
+      console.error("Erro no reconhecimento:", e);
       setListening(false);
-    } else {
-      alert("O reconhecimento de fala não é compatível com seu navegador.");
-    }
-  };
+    };
 
-  const speak = (text) => {
-    if ("speechSynthesis" in window) {
-      const speechSynthesis = window.speechSynthesis;
-      const voices = speechSynthesis.getVoices();
-      
-      // Encontre a voz feminina em português, preferencialmente a voz do Google
-      const portugueseVoice = voices.find((voice) => voice.lang === 'pt-BR' && voice.name.includes('Google'));
-  
-      // Se não encontrar a voz do Google, use qualquer voz feminina em português
-      const defaultPortugueseVoice = voices.find((voice) => voice.lang === 'pt-BR' && voice.name.includes('female'));
-  
-      const selectedVoice = portugueseVoice || defaultPortugueseVoice;
-  
-      if (selectedVoice) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.voice = selectedVoice;
-        speechSynthesis.speak(utterance);
-      } else {
-        alert("Não foi encontrada nenhuma voz adequada em português, tente novamente");
-      }
-    } else {
-      alert("A conversão de texto em fala não é compatível com seu navegador.");
-    }
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setQuestion(transcript);
+      sendPrompt(transcript);
+    };
+
+    recognition.start();
   };
-  
 
   return (
     <div className="app">
-      <div className="app-container">
-        <div className="spotlight__option">
-          <h2 className="nome-chat">
-            Zaila <div className="online"></div>
-          </h2>
-          {listening ? (
-            <button className="custom--button" onClick={stopListening}>
-              <img src={microfoneMudo} alt="Icon" className="icon" />
-            </button>
-          ) : (
-            <button className="custom--button" onClick={startListening}>
-              <img src={microfone} alt="Icon" className="icon" />
-            </button>
-          )}
-          <button className="custom--button" onClick={clearMessages}>
-            <img src={clearImage} alt="Icon" className="icon" />
-          </button>
-          <button className="custom-button" onClick={fecharGuia}>
-            <img src={closeImage} alt="Icon" className="icon" />
-          </button>
-        </div>
-        <div className="spotlight__wrapper">
-  <div className="spotlight__answer" id="chatbox">
-    {messages.map((message, index) => (
-      <div
-        key={index}
-        className={`chatbox_message ${
-          message.type === "question" ? "question" : "answer"
-        }`}
-      >
-        <span dangerouslySetInnerHTML={{ __html: message.content }}></span>
-        <button
-          className="read-aloud-button"
-          onClick={() => speak(message.content)}
-          style={{
-            backgroundColor: "transparent",
-            padding: "0",
-            border: "none",
-            marginLeft: "15px",
-            display: "inline-block",
-            verticalAlign: "middle", // Center the button vertically
-          }}
-        >
-          <img src={falar} alt="Icon" className="icon" />
+      <header className="header">
+        <h1>Zaila</h1>
+        <button className="clear-btn" onClick={clearMessages}>
+          <Trash2 size={20} />
         </button>
-      </div>
-    ))}
-  </div>
+      </header>
 
-  <input
-    ref={inputRef}
-    type="text"
-    className="spotlight__input"
-    placeholder="Digite uma pergunta..."
-    value={question}
-    onChange={(e) => setQuestion(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        sendPrompt(question);
-      }
-    }}
-    disabled={loading || listening}
-    style={{
-      backgroundImage: loading ? `url(${loadingGif})` : `url(${lens})`,
-    }}
-  />
-</div>
+      <div className="chatbox" ref={chatboxRef}>
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`message ${msg.type}`}>
+            <p>
+  {msg.content.split('\n').map((line, i) => (
+    <span key={i}>
+      {line}
+      <br />
+    </span>
+  ))}
+</p>
+            {msg.type === "bot" && (
+              <button className="speak-btn" onClick={() => speak(msg.content)}>
+                <Volume2 size={18} />
+              </button>
+            )}
+          </div>
+        ))}
+        {loading && <div className="message bot"><p>Digitando...</p></div>}
       </div>
+
+      <footer className="input-area">
+        <input
+          type="text"
+          placeholder="Digite ou fale sua mensagem..."
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendPrompt(question)}
+          disabled={loading}
+        />
+        <button onClick={() => sendPrompt(question)} disabled={loading}>
+          <Send size={20} />
+        </button>
+        <button onClick={startListening} className={listening ? "mic-on" : ""}>
+          <Mic size={20} />
+        </button>
+      </footer>
     </div>
   );
 };
